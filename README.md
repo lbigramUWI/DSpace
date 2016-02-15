@@ -14,3 +14,5 @@ Example of call: /keywords/dc.subject
 This function does the same thing as (1) but is in the form of a post.
 
 
+How to use: You need to place these functions in the ItemsResource.java source file. OR
+you can use dspace overlays. 
