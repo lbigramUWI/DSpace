@@ -16,3 +16,5 @@ This function does the same thing as (1) but is in the form of a post.
 
 How to use: You need to place these functions in the ItemsResource.java source file. OR
 you can use dspace overlays. 
+Once you place these functions in ItemsResource.java you need to rebuild dspace (mvn package) and and 
+ant update. Restart Apache once done.
