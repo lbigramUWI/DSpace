@@ -1,1 +1,135 @@
 /* Functions added to dspace 5.4 */
+
+Function 1: (ADDED TO REST API)
+
+    @GET
+    @Path("/keywords/{word}")
+    @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
+    public String[] getKeywords(@PathParam("word") String word, @QueryParam("expand") String expand,
+            @QueryParam("userIP") String user_ip, @QueryParam("userAgent") String user_agent,
+            @QueryParam("xforwardedfor") String xforwardedfor, @Context HttpHeaders headers, @Context HttpServletRequest request)
+            throws WebApplicationException
+    {
+
+        log.info("Retrieving distinct keywords" + word);
+        org.dspace.core.Context context = null;
+        List<String> items = new ArrayList<String>();
+        String[] metadata = mySplit(word);
+
+        try
+        {
+            context = createContext(getUser(headers));
+            
+            String sql = "SELECT DISTINCT TEXT_VALUE " +
+                    "FROM METADATAVALUE " +
+                    "JOIN METADATAFIELDREGISTRY ON METADATAVALUE.METADATA_FIELD_ID = METADATAFIELDREGISTRY.METADATA_FIELD_ID " +
+                    "JOIN METADATASCHEMAREGISTRY ON METADATAFIELDREGISTRY.METADATA_SCHEMA_ID = METADATASCHEMAREGISTRY.METADATA_SCHEMA_ID " +
+                    "WHERE " +
+                    "SHORT_ID='" + metadata[0] + "'  AND " +
+                    "ELEMENT='" + metadata[1] + "' ";
+            
+            if (metadata.length > 3)
+            {
+                sql += " AND QUALIFIER='" + metadata[2] + "' ";
+            }
+            
+            log.info("SQL: " + sql);
+            
+            TableRowIterator iterator = org.dspace.storage.rdbms.DatabaseManager.query(context, sql);
+            while (iterator.hasNext())
+            {
+                TableRow row = iterator.next();
+                String k = row.getStringColumn("TEXT_VALUE");
+                items.add(k);
+            }
+
+            context.complete();        
+
+        }
+        catch (SQLException e)
+        {
+            processException("Could not read item(id="  + "), SQLException. Message: " + e.getMessage(), context);
+        }
+        catch (ContextException e)
+        {
+            processException("Could not read item(id=" + "), ContextException. Message: " + e.getMessage(), context);
+        }
+        finally
+        {
+            processFinally(context);
+        }
+
+         String[] keywordsarr = new String[items.size()];
+         keywordsarr = items.toArray(keywordsarr);
+         
+         return keywordsarr;
+    }
+
+
+Function 2: (ADDED TO REST API)
+
+    @POST
+    @Path("/find-distinct-values-by-metadata-field")
+    @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
+    public String[] findDistinctValuesByMetadataField(MetadataEntry metadataEntry, @QueryParam("expand") String expand,
+            @QueryParam("userIP") String user_ip, @QueryParam("userAgent") String user_agent,
+            @QueryParam("xforwardedfor") String xforwardedfor, @Context HttpHeaders headers, @Context HttpServletRequest request)
+            throws WebApplicationException
+    {
+
+        log.info("Retrieving distinct distinct values of:" + metadataEntry.getKey());
+        org.dspace.core.Context context = null;
+         List<String> items = new ArrayList<String>();
+        String[] metadata = mySplit(metadataEntry.getKey());
+        
+        
+        
+        try
+        {
+            context = createContext(getUser(headers));
+            
+            String sql = "SELECT DISTINCT TEXT_VALUE " +
+                    "FROM METADATAVALUE " +
+                    "JOIN METADATAFIELDREGISTRY ON METADATAVALUE.METADATA_FIELD_ID = METADATAFIELDREGISTRY.METADATA_FIELD_ID " +
+                    "JOIN METADATASCHEMAREGISTRY ON METADATAFIELDREGISTRY.METADATA_SCHEMA_ID = METADATASCHEMAREGISTRY.METADATA_SCHEMA_ID " +
+                    "WHERE " +
+                    "SHORT_ID='" + metadata[0] + "' AND " +
+                    "ELEMENT='" + metadata[1] + "' ";
+                    
+            if (metadata.length > 3)
+            {
+                sql += " AND QUALIFIER='" + metadata[2] + "' ";
+            }
+            
+            log.info("SQL: " + sql);
+            
+            TableRowIterator iterator = org.dspace.storage.rdbms.DatabaseManager.query(context, sql);
+            while (iterator.hasNext())
+            {
+                TableRow row = iterator.next();
+                String k = row.getStringColumn("TEXT_VALUE");
+                items.add(k);
+            }
+
+            context.complete();        
+            
+
+        }
+        catch (SQLException e)
+        {
+            processException("Could not read item(id="  + "), SQLException. Message: " + e.getMessage(), context);
+        }
+        catch (ContextException e)
+        {
+            processException("Could not read item(id=" + "), ContextException. Message: " + e.getMessage(), context);
+        }
+        finally
+        {
+            processFinally(context);
+        }
+
+         String[] keywordsarr = new String[items.size()];
+         keywordsarr = items.toArray(keywordsarr);
+         
+         return keywordsarr;
+    }
